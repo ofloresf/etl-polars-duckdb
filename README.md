@@ -1,6 +1,6 @@
 # Lightweight ETL pipeline with Polars y DuckDB
 
-Data Engineering project designed to be excuted effieciently in a limited resoources environment (4 GB RAM) running on Linux Mint.
+Data Engineering project designed to be excuted effieciently in a limited resources environment (4 GB RAM) running on Linux Mint.
 
 ## Arquitecture and Technological Stack
 * **Packet Manager:** `uv` (fast and low memory consumption)
