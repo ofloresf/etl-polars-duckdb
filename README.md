@@ -1,28 +1,30 @@
-# Lightweight ETL pipeline with Polars y DuckDB
+# Lightweight Satellite Renewable Energy Pipeline (NASA POWER + Polars + DuckDB)
 
-Data Engineering project designed to be excuted effieciently in a limited resources environment (4 GB RAM) running on Linux Mint.
+An energy-efficient Data Engineering ETL pipeline built on Linux Mint that ingests hourly satellite solar radiation and wind speed metrics from the **NASA POWER API**, cleans and transforms them in-memory using **Polars**, and stores analytical aggregations in **DuckDB**.
 
-## Arquitecture and Technological Stack
-* **Packet Manager:** `uv` (fast and low memory consumption)
-*  **ETL Processing:** Polars + Apache Arrow
-*  **Analytic Storage:** DuckDB (local coulmnar storage)
+## Why This Stack? (Green Software & Low-Resource Engineering)
+Designed to run smoothly on constrained hardware (**4 GB RAM**), minimizing CPU cycles, memory overhead, and energy footprint compared to heavy JVM-based or multi-container stacks:
+* **Package & Environment Management:** `uv` (ultra-fast Rust-based Python tooling)
+* **Data Processing & Cleaning:** Polars + Apache Arrow (zero-copy columnar transformations, handling missing satellite telemetry `-999` values, and feature engineering)
+* **Analytical Warehouse:** DuckDB (embedded OLAP SQL database)
 
-## Data Flow
-`Raw Data (Python/CSV)` -> `Memory transformation (Polars)` -> `Load and SQL Queries (DuckDB)`
+## Data Pipeline Architecture
+`NASA POWER REST API (Satellite Telemetry)` ➔ `Polars (Data Cleaning & Feature Engineering)` ➔ `DuckDB (Analytical SQL Aggregations)`
 
-## How to replicate this project step by step
-1. Clone the repo:
+## Quickstart Guide
+
+1. Clone the repository:
    ```bash
-   git clone https://github.com
+   git clone https://github.com/ofloresf/etl-polars-duckdb.git
    cd etl-polars-duckdb
    ```
-2. Automatically Install dependencies with `uv`:
+
+2. Install dependencies automatically via `uv`:
    ```bash
    uv sync
    ```
-3. Run the pipeline:
+
+3. Run the ETL pipeline:
    ```bash
-   uv run pipeline.py
-   ```   
-# etl-polars-duckdb
-# etl-polars-duckdb
+   uv run renewable_pipeline.py
+   ```
