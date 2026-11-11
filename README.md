@@ -28,3 +28,4 @@ Proyecto de Ingeniería de Datos diseñado para ejecutarse de forma eficiente en
    uv run pipeline.py
    ```
 # etl-polars-duckdb
+# etl-polars-duckdb
