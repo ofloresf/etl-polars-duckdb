@@ -812,6 +812,7 @@ dependencies = [
     { name = "duckdb" },
     { name = "polars" },
     { name = "pyarrow" },
+    { name = "requests" },
 ]
 
 [package.metadata]
@@ -820,6 +821,7 @@ requires-dist = [
     { name = "duckdb", specifier = ">=2.0.0" },
     { name = "polars", specifier = ">=2.1.0" },
     { name = "pyarrow", specifier = ">=26.0.1" },
+    { name = "requests", specifier = ">=2.34.2" },
 ]
 
 [[package]]

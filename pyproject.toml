@@ -9,6 +9,7 @@ dependencies = [
     "duckdb>=2.0.0",
     "polars>=2.1.0",
     "pyarrow>=26.0.1",
+    "requests>=2.34.2",
 ]
 
 [project.scripts]
