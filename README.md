@@ -34,3 +34,25 @@ Ensure you have `uv` installed on your system.
 ```bash
 git clone [https://github.com/ofloresf/etl-polars-duckdb.git](https://github.com/ofloresf/etl-polars-duckdb.git)
 cd etl-polars-duckdb
+```
+### 2. Install Dependencies
+uv will automatically create a virtual environment and resolve dependencies:
+```bash
+uv sync
+```
+### 3. Cross-Platform Environment Setup
+Linux (Mint / Ubuntu) & macOS:
+```bash
+pip install uv
+# Or via standalone installer:
+curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+```
+Windows (Native / PowerShell):
+```PowerShell
+winget install --id=astral-sh.uv -e
+```
+ Usage
+Run the core ETL pipeline to fetch latest weather metrics for Seville and update the local DuckDB warehouse:
+```bash
+uv run python renewable_pipeline.py
+```
