@@ -1,30 +1,36 @@
-# Lightweight Satellite Renewable Energy Pipeline (NASA POWER + Polars + DuckDB)
+# Climate Tech DataOps Pipeline 🌍⚡
 
-An energy-efficient Data Engineering ETL pipeline built on Linux Mint that ingests hourly satellite solar radiation and wind speed metrics from the **NASA POWER API**, cleans and transforms them in-memory using **Polars**, and stores analytical aggregations in **DuckDB**.
+A lightweight, high-performance DataOps pipeline designed for Climate Tech applications. It extracts real-time renewable energy weather metrics (solar radiation and wind speed) from the NASA POWER API, processes them using memory-efficient columnar formats, and stores them locally in an analytical warehouse.
 
-## Why This Stack? (Green Software & Low-Resource Engineering)
-Designed to run smoothly on constrained hardware (**4 GB RAM**), minimizing CPU cycles, memory overhead, and energy footprint compared to heavy JVM-based or multi-container stacks:
-* **Package & Environment Management:** `uv` (ultra-fast Rust-based Python tooling)
-* **Data Processing & Cleaning:** Polars + Apache Arrow (zero-copy columnar transformations, handling missing satellite telemetry `-999` values, and feature engineering)
-* **Analytical Warehouse:** DuckDB (embedded OLAP SQL database)
+Built with a **Green Software** engineering mindset: optimized to run seamlessly on resource-constrained edge environments (such as Linux Mint with 4GB RAM) as well as robust development workstations, utilizing zero heavy containerization overhead.
 
-## Data Pipeline Architecture
-`NASA POWER REST API (Satellite Telemetry)` ➔ `Polars (Data Cleaning & Feature Engineering)` ➔ `DuckDB (Analytical SQL Aggregations)`
+---
 
-## Quickstart Guide
+## 🚀 Key Features
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ofloresf/etl-polars-duckdb.git
-   cd etl-polars-duckdb
-   ```
+- **High-Performance Extract**: Pulls hourly solar irradiance (`ALLSKY_SFC_SW_DWN`) and 10m wind speed (`WS10M`) metrics using the NASA POWER API.
+- **Modern Data Stack**: Powered by `uv` for lightning-fast dependency management, `Polars` + Apache Arrow for blazing-fast, low-memory data transformations, and `DuckDB` as an embedded analytical data warehouse.
+- **Multi-Platform Portability**: Runs identically across Linux Mint, Ubuntu (WSL2), and native Windows without modifying a single line of code.
+- **Data Quality & Observability** *(Phase 3)*: Structured logging and strict physical boundary validation rules prior to warehouse ingestion.
+- **Automated CI/CD** *(Phase 3)*: Daily scheduled execution via GitHub Actions.
 
-2. Install dependencies automatically via `uv`:
-   ```bash
-   uv sync
-   ```
+---
 
-3. Run the ETL pipeline:
-   ```bash
-   uv run renewable_pipeline.py
-   ```
+## 🛠️ Tech Stack
+
+- **Language**: Python 3.10+
+- **Dependency & Environment Manager**: [uv](https://github.com/astral-sh/uv)
+- **Data Processing**: Polars, Apache Arrow
+- **Storage / Warehouse**: DuckDB (`climate_warehouse.duckdb`)
+- **API Source**: NASA POWER API (Prediction of Worldwide Energy Resources)
+
+---
+
+## 📦 Installation & Setup
+
+Ensure you have `uv` installed on your system.
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/ofloresf/etl-polars-duckdb.git](https://github.com/ofloresf/etl-polars-duckdb.git)
+cd etl-polars-duckdb
