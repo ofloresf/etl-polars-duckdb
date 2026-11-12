@@ -1,24 +1,50 @@
-# Project Roadmap & DataOps Strategy
+# Project Roadmap: Climate Tech DataOps Pipeline
+This document outlines the evolutionary phases of our lightweight, green-engineered data pipeline.
 
 ## Vision & Career Focus
 Building a hybrid **DataOps** portfolio tailored for the **European Climate Tech & Clean Energy** sector, combining prior experience in **Technical Support, Cloud, DevOps, and Data** under **Green Software** principles (high efficiency, low hardware/energy footprint).
 
-## Phased Execution Plan
+# ✅ Phase 1: Core ETL & Analytical Storage (Completed)
 
-### Phase 1: Lightweight Local Core (Completed ✅)
-* **Environment:** Linux Mint (4 GB RAM constraint).
-* **Stack:** `uv`, Polars, Apache Arrow, DuckDB, Git/GitHub.
-* **Pipeline:** Ingestion of hourly satellite solar radiation and wind speed from **NASA POWER API**, unit conversion, anomaly filtering (`-999`), and SQL aggregation in DuckDB.
+[x] Integrate NASA POWER API for real-time solar and wind metrics (Seville coordinates).
 
-### Phase 2: Cross-Platform Validation (In Progress 🔄)
-* Clone and execute the pipeline on **Windows** (high-spec machine) and **Ubuntu** using `uv sync`.
-* Verify zero-code-change portability and document any OS-specific nuances in `README.md`.
+[x] Implement robust cleaning logic to filter out missing/null values (-999).
 
-### Phase 3: DataOps & Automation Layer (Upcoming ⏳)
-* **CI/CD:** Automate daily pipeline execution and code linting (`Ruff`) via **GitHub Actions**.
-* **Observability:** Replace `print()` statements with structured Python `logging` (execution time, row counts, memory usage).
-* **Data Quality:** Implement automated schema and value range validations before loading to DuckDB.
+[x] Process and transform data streams efficiently using Polars and Apache Arrow.
 
-### Phase 4: Scalable Cloud & Analytics Layer (Future ⏳)
-* Export clean datasets to partitioned **Parquet** files and sync with object storage (S3 / Cloudflare R2).
-* Integrate **dbt-duckdb** for modular SQL modeling and automated data tests.
+[x] Persist and query daily aggregated metrics inside an embedded DuckDB warehouse (climate_warehouse.duckdb).
+
+
+# ✅ Phase 2: Multi-Platform Portability & Environment Validation (Completed)
+
+[x] Establish dependency management via uv.
+
+[x] Validate zero-code-change portability across Linux Mint (4GB RAM edge setup), Ubuntu (WSL2), and Native Windows.
+
+[x] Standardize cross-platform installation procedures (winget for Windows, shell scripts for Unix).
+
+
+#  Phase 3: DataOps Maturity & Cloud Automation (In Progress)
+
+[x] Documentation sync: Publish professional English README and ROADMAP.
+
+## [ ] Step 3.1: Observability & Data Quality:
+
+Replace basic print() statements with structured logging (logging module).
+
+Implement physical range boundary assertions (e.g., solar radiation >= 0, wind speed >= 0) before DuckDB insertion.
+
+## [ ] Step 3.2: Code Quality with Ruff:
+
+Integrate Ruff for ultra-fast linting and code formatting.
+
+## [ ] Step 3.3: Cloud Automation:
+
+Set up GitHub Actions workflow (.github/workflows/daily_etl.yml) for scheduled daily pipeline execution.
+
+
+#  Phase 4: Advanced Green Analytics & Reporting (Planned)
+
+[ ] Build lightweight visualization endpoints or local dashboard metrics.
+
+[ ] Carbon footprint / energy optimization tracking for pipeline execution.
