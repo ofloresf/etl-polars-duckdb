@@ -1,67 +1,121 @@
-import requests
+import logging
+import urllib.request
+import json
+from datetime import datetime, timedelta
 import polars as pl
 import duckdb
 
-# 1. EXTRACT: Fetch hourly solar radiation & wind speed from NASA POWER API (Seville, Spain)
-host = "power.larc.nasa.gov"
-path = "/api/temporal/hourly/point"
-url = f"https://{host}{path}"
+# Configure structured logging (Green Software: zero heavy external logging dependencies)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("ClimatePipeline")
 
-params = {
-    "parameters": "ALLSKY_SFC_SW_DWN,WS10M",
-    "community": "RE",
-    "longitude": -5.98,
-    "latitude": 37.38,
-    "start": "20261025",
-    "end": "20261031",
-    "format": "JSON",
-}
+# Configuration Constants (Seville coordinates)
+LAT = 37.3891
+LON = -5.9845
 
-print("Fetching NASA POWER satellite renewable energy metrics...")
-response = requests.get(url, params=params, timeout=20)
-response.raise_for_status()
+# Use a fully consolidated historical window (previous year) to ensure data availability
+START_DATE = "20250101"
+END_DATE = "20250131"
 
-payload = response.json()
-solar_dict = payload["properties"]["parameter"]["ALLSKY_SFC_SW_DWN"]
-wind_dict = payload["properties"]["parameter"]["WS10M"]
-
-# 2. TRANSFORM: Clean NASA missing values (-999) and enrich using Polars
-df = pl.DataFrame({
-    "timestamp_str": list(solar_dict.keys()),
-    "solar_radiation_wm2": list(solar_dict.values()),
-    "wind_speed_ms": list(wind_dict.values()),
-})
-
-df_clean = (
-    df.filter(
-        (pl.col("solar_radiation_wm2") >= 0) & (pl.col("wind_speed_ms") >= 0)
-    )
-    .with_columns([
-        (pl.col("timestamp_str") + "00").str.to_datetime("%Y%m%d%H%M").alias("timestamp"),
-        (pl.col("wind_speed_ms") * 3.6).round(2).alias("wind_speed_kmh"),
-    ])
-    .with_columns([
-        pl.col("timestamp").dt.date().alias("date"),
-        (pl.col("solar_radiation_wm2") > 400).alias("is_high_solar"),
-        (pl.col("wind_speed_kmh") > 15).alias("is_high_wind"),
-    ])
-    .select(["timestamp", "date", "solar_radiation_wm2", "wind_speed_kmh", "is_high_solar", "is_high_wind"])
+NASA_API_URL = (
+    f"https://power.larc.nasa.gov/api/temporal/hourly/point?"
+    f"parameters=ALLSKY_SFC_SW_DWN,WS10M&community=RE&"
+    f"longitude={LON}&latitude={LAT}&start={START_DATE}&end={END_DATE}&format=JSON"
 )
 
-# 3. LOAD & ANALYZE: Persist into local DuckDB analytical warehouse
-con = duckdb.connect("climate_warehouse.duckdb")
-con.execute("CREATE OR REPLACE TABLE nasa_hourly_renewables AS SELECT * FROM df_clean")
+def fetch_nasa_data() -> dict:
+    logger.info(f"Fetching NASA POWER weather metrics for Seville (lat: {LAT}, lon: {LON})...")
+    logger.info(f"Date range: {START_DATE} to {END_DATE}")
+    
+    req = urllib.request.Request(
+        NASA_API_URL,
+        headers={"User-Agent": "ClimateTechDataOpsPipeline/1.0"}
+    )
+    with urllib.request.urlopen(req) as response:
+        data = json.loads(response.read().decode("utf-8"))
+    
+    logger.info("Successfully retrieved raw JSON payload from NASA POWER API.")
+    return data
 
-daily_summary = con.sql("""
-    SELECT 
-        date,
-        ROUND(AVG(solar_radiation_wm2), 1) AS avg_solar_wm2,
-        ROUND(MAX(wind_speed_kmh), 1) AS max_wind_kmh,
-        SUM(CASE WHEN is_high_solar OR is_high_wind THEN 1 ELSE 0 END) AS optimal_renewable_hours
-    FROM nasa_hourly_renewables
-    GROUP BY date
-    ORDER BY date ASC
-""").pl()
+def transform_and_validate_data(raw_data: dict) -> pl.DataFrame:
+    logger.info("Parsing and transforming hourly meteorological streams...")
+    
+    properties = raw_data.get("properties", {}).get("parameter", {})
+    solar_rad = properties.get("ALLSKY_SFC_SW_DWN", {})
+    wind_speed = properties.get("WS10M", {})
+    
+    # Align timestamps securely
+    timestamps = list(solar_rad.keys())
+    solar_values = [solar_rad.get(ts) for ts in timestamps]
+    wind_values = [wind_speed.get(ts) for ts in timestamps]
+    
+    df = pl.DataFrame({
+        "timestamp": timestamps,
+        "ALLSKY_SFC_SW_DWN": solar_values,
+        "WS10M": wind_values
+    })
+    
+    # Clean NASA missing value indicator (-999) and parse dates (NASA hourly format is YYYYMMDDHH -> append '00' for minutes)
+    df = df.with_columns([
+        (pl.col("timestamp") + "00").str.strptime(pl.Datetime, "%Y%m%d%H%M").alias("datetime"),
+        pl.col("ALLSKY_SFC_SW_DWN").cast(pl.Float64),
+        pl.col("WS10M").cast(pl.Float64)
+    ]).filter(
+        (pl.col("ALLSKY_SFC_SW_DWN") != -999) & 
+        (pl.col("WS10M") != -999)
+    )
+    
+    initial_rows = len(df)
+    logger.info(f"Cleaned dataset rows (excluding API nulls): {initial_rows}")
+    
+    # Data Quality: Physical boundary checks
+    logger.info("Running Data Quality physical boundary validations...")
+    valid_df = df.filter(
+        (pl.col("ALLSKY_SFC_SW_DWN") >= 0.0) &
+        (pl.col("WS10M") >= 0.0) &
+        (pl.col("WS10M") < 100.0)
+    )
+    
+    dropped_rows = initial_rows - len(valid_df)
+    if dropped_rows > 0:
+        logger.warning(f"Data Quality Alert: Dropped {dropped_rows} records violating physical boundaries.")
+    else:
+        logger.info("Data Quality check passed: All records within valid physical parameters.")
+        
+    return valid_df
 
-print("\nNASA Satellite Renewable Potential Summary (Seville):")
-print(daily_summary)
+def persist_to_duckdb(df: pl.DataFrame):
+    db_path = "climate_warehouse.duckdb"
+    logger.info(f"Persisting processed telemetry into DuckDB warehouse: {db_path}")
+    
+    con = duckdb.connect(db_path)
+    con.register("df_view", df)
+    
+    # Drop and recreate cleanly to avoid schema mismatch from previous test runs
+    con.execute("DROP TABLE IF EXISTS nasa_hourly_renewables;")
+    con.execute("""
+        CREATE TABLE nasa_hourly_renewables AS 
+        SELECT * FROM df_view;
+    """)
+    
+    row_count = con.execute("SELECT COUNT(*) FROM nasa_hourly_renewables;").fetchone()[0]
+    logger.info(f"Persistence complete. Total rows in warehouse table 'nasa_hourly_renewables': {row_count}")
+    
+    con.close()
+
+def main():
+    try:
+        raw_json = fetch_nasa_data()
+        processed_df = transform_and_validate_data(raw_json)
+        persist_to_duckdb(processed_df)
+        logger.info("Pipeline execution completed successfully.")
+    except Exception as e:
+        logger.error(f"Pipeline execution failed: {str(e)}", exc_info=True)
+        raise
+
+if __name__ == "__main__":
+    main()
