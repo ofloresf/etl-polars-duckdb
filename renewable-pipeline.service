@@ -1,0 +1,9 @@
+[Unit]
+Description=Climate Tech DataOps Pipeline - NASA POWER Ingestion
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/oflores/proyecto-datos/run_pipeline.sh
+StandardOutput=journal
+StandardError=journal

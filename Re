@@ -1,0 +1,33 @@
+cat << 'EOF' > README.md
+# Lightweight Renewable Energy ETL Pipeline (Polars + DuckDB)
+
+An energy-efficient Data Engineering pipeline built on Linux Mint that ingests real-time solar radiation and wind speed metrics from the **Open-Meteo API**, processes them in-memory using **Polars**, and stores analytical aggregations in **DuckDB**.
+
+## Why This Stack? (Green Software Approach)
+Designed to run smoothly on low-resource hardware (**4 GB RAM**), minimizing CPU cycles and memory footprint compared to heavy JVM-based or containerized stacks:
+* **Package Management:** `uv` (fast dependency resolution in Rust)
+* **Data Processing:** Polars + Apache Arrow (zero-copy columnar transformations)
+* **Analytical Storage:** DuckDB (embedded OLAP database)
+
+## Data Architecture
+`Open-Meteo REST API (JSON)` ➔ `Polars DataFrame (Transform & Feature Engineering)` ➔ `DuckDB (SQL Warehouse)`
+
+## Quickstart Guide
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com
+   cd YOUR_REPO_NAME
+   ```
+
+2. Install dependencies via `uv`:
+   ```bash
+   uv sync
+   ```
+
+3. Run the ETL pipeline:
+   ```bash
+   uv run renewable_pipeline.py
+   ```
+EOF
+
